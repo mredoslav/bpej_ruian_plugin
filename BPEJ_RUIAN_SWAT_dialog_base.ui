@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>BPEJRUIANSWATDialogBase</class>
+ <widget class="QDialog" name="BPEJRUIANSWATDialogBase">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>769</width>
+    <height>517</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>BPEJ a RÚIAN pro SWAT</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTextBrowser" name="textBrowser">
+     <property name="html">
+      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Tento plugin má tři funkce:&lt;br /&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;1. Land Use RÚIAN&lt;/span&gt;&lt;br /&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Úprava vrstvy parcely.shp z pluginu Import dat RÚIAN do podoby, &lt;br /&gt;která se dá použít jako data Land Use v modelu SWAT.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Po aktivaci tlačítka, plugin požaduje nahrání vrstvy parcely.shp, která byla pro dané území stažena a nahraje ji. Následně plugin požaduje umístění a název výstupního souboru SWAT_LU, kde jsou data převedena do formátu přijatelného pro model SWAT.&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;2. Stažení BPEJ pro celou ČR&lt;/span&gt;&lt;br /&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Stažení vektorové vrstvy BPEJ ze stránek Státního pozemkového úřadu, &lt;br /&gt;která je každý měsíc aktualizovaná.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Po aktivaci tlačítka proběhne stažení aktuální vrstvy BPEJ do složky Downloads/Stažené soubory ve formátu .zip.&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;3. BPEJ oprava a oříznutí a úprava&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Oprava geometrie vrstvy BPEJ, využití funkce clip k oříznut na požadovaný rozsah a zanechání jediného sloupce v atributové tabulce s hodnotami BPEJ.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Po aktivaci tlačítka &lt;span style=&quot; font-weight:600;&quot;&gt;BPEJ oprava, oříznutí a úprava &lt;/span&gt;je po uživateli požadoávno vybrání souboru bpej.shp. Soubor z předcházejího kroku je&lt;span style=&quot; font-weight:600;&quot;&gt; nutné extrahovat z formátu .zip&lt;/span&gt;. Následně je po uživateli požadování vybrání souboru pro oříznut (např. povodi.shp). Pak následuje dotaz na umístění a název oříznuté vrstvy. Následně je nahrána do prostředí QGIS.&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>744</width>
+       <height>47</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pbLUparcely">
+     <property name="text">
+      <string>Land Use RÚIAN</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pbdownloadBPEJ">
+     <property name="text">
+      <string>Stažení BPEJ pro celou ČR</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pbclipBPEJ">
+     <property name="text">
+      <string>BPEJ oprava, oříznutí a úprava</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="button_box">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>button_box</sender>
+   <signal>accepted()</signal>
+   <receiver>BPEJRUIANSWATDialogBase</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_box</sender>
+   <signal>rejected()</signal>
+   <receiver>BPEJRUIANSWATDialogBase</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/BPEJ_RUIAN_SWAT" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
