@@ -26,10 +26,12 @@ import os
 import urllib.request
 import re
 import processing
+import webbrowser
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QAction
+from PyQt5.QtCore import QVariant
 from qgis.core import edit, QgsProject, QgsVectorLayer, Qgis, QgsCoordinateReferenceSystem, QgsField, QgsExpressionContext, QgsExpression
 from qgis.utils import iface
 
@@ -51,6 +53,7 @@ class BPEJRUIANSWATDialog(QtWidgets.QDialog, FORM_CLASS):
         self.pbclipBPEJ.clicked.connect(self.clip_bpej)
         self.pbLUparcely.clicked.connect(self.lu_parcely)
         self.pbdownloadBPEJ.clicked.connect(self.download_bpej)
+        self.pbCHMU.clicked.connect(self.html_chmu)
 
     def clip_bpej(self):
         # let the user select input, output, and clip files using a file dialog
@@ -67,37 +70,76 @@ class BPEJRUIANSWATDialog(QtWidgets.QDialog, FORM_CLASS):
         msg_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         result = msg_box.exec_()
         if result == QMessageBox.Ok:
-        # Run the fix geometries algorithm
+
+            output_file_name = os.path.splitext(os.path.basename(output_file))[0]
+            # Run the fix geometries algorithm
             result = processing.run('native:fixgeometries', {
                 'INPUT': layer,
                 'OUTPUT': 'memory:'
             })
 
-        # Get the fixed layer from the result
+            # Get the fixed layer from the result
             fixed_layer = result['OUTPUT']
             clip_layer = QgsVectorLayer(clip_file, 'layer_name', 'ogr')
             processing.run('native:clip', {
-            'INPUT': fixed_layer,
-            'OVERLAY': clip_layer,
-            'OUTPUT': output_file,
+                'INPUT': fixed_layer,
+                'OVERLAY': clip_layer,
+                'OUTPUT': output_file,
             })
-            clipped_layer = QgsVectorLayer(output_file, 'povodi_BPEJ', "ogr")
-            field_names_to_keep = ['B5']
-            fields = clipped_layer.fields()
-            field_indices_to_remove = []
-            for i, field in enumerate(fields):
-                if field.name() not in field_names_to_keep:
-                    field_indices_to_remove.append(i)
-            clipped_layer.dataProvider().deleteAttributes(field_indices_to_remove)
-            clipped_layer.updateFields()
-            clipped_layer.commitChanges()
-        # Add the fixed layer to the QGIS project
-            QgsProject.instance().addMapLayer(clipped_layer)
+            clipped_layer = QgsVectorLayer(output_file, output_file_name, "ogr")
+            # Check if the layer is valid
+            if clipped_layer.isValid():
+                # Start editing the layer
+                clipped_layer.startEditing()
 
-            if not clipped_layer.isValid():
-                QMessageBox.critical(None, "Error", "Oprava geometrií neproběhla nebo výřez neproběhli v pořádku, zkontrolujte vstupní data.")
-            else:
+                # Remove unnecessary fields
+                field_names_to_keep = ['B5']
+                fields = clipped_layer.fields()
+                field_indices_to_remove = []
+                for i, field in enumerate(fields):
+                    if field.name() not in field_names_to_keep:
+                        field_indices_to_remove.append(i)
+                clipped_layer.dataProvider().deleteAttributes(field_indices_to_remove)
+                clipped_layer.updateFields()
+                clipped_layer.commitChanges()
+
+                # ... (previous code remains unchanged)
+                # ... (previous code remains unchanged)
+
+                # Check the fields before the update
+                print("Fields before update:", [field.name() for field in clipped_layer.fields()])
+
+                # Add a new field "HPJ_kod" to the layer
+                with edit(clipped_layer):
+                    clipped_layer.dataProvider().addAttributes([QgsField('HPJ_kod', QVariant.Int)])
+                    clipped_layer.updateFields()
+
+                    # Update the "HPJ_kod" field with integer values based on the second and third characters of "B5"
+                    for feature in clipped_layer.getFeatures():
+                        b5_value = feature['B5']
+                        if b5_value is not None and isinstance(b5_value, str) and len(b5_value) >= 3:
+                            hpj_kod_value = int(b5_value[1:3])
+                            feature.setAttribute('HPJ_kod', hpj_kod_value)
+                            clipped_layer.updateFeature(feature)
+
+
+                # Refresh the layer to reflect the changes
+                clipped_layer.triggerRepaint()
+
+                # Check the fields after the update
+                print("Fields after update:", [field.name() for field in clipped_layer.fields()])
+
+                # ... (rest of the code remains unchanged)
+
+                # ... (rest of the code remains unchanged)
+
+                # Add the modified layer to the QGIS project
+                QgsProject.instance().addMapLayer(clipped_layer)
+
                 QMessageBox.information(None, "Gratuluji!", "Oprava, výřez a úprava dat úspěšně provedena.")
+            else:
+                QMessageBox.critical(None, "Error",
+                                     "Oprava geometrií neproběhla nebo výřez neproběhli v pořádku, zkontrolujte vstupní data.")
 
         #dodělat mazání sloupců
 
@@ -120,7 +162,6 @@ class BPEJRUIANSWATDialog(QtWidgets.QDialog, FORM_CLASS):
         dialog.setAcceptMode(QFileDialog.AcceptSave)
         dialog.setDirectory('.')
         dialog.setNameFilter('Shapefile (*.shp)')
-        # add field "SWAT_LU" that is base on the values of ZpusobyVyu a DruhPozemk
         if dialog.exec_() == QFileDialog.Accepted:
             output_path = dialog.selectedFiles()[0]
         else:
@@ -129,28 +170,17 @@ class BPEJRUIANSWATDialog(QtWidgets.QDialog, FORM_CLASS):
             layer = iface.activeLayer()  # Get the active layer
             if layer is not None:
                 processing.runAndLoadResults("qgis:fieldcalculator", {
-                'INPUT': layer,
-                'FIELD_NAME': 'SWAT_LU',
-                'FIELD_TYPE': 2,  # Set the data type to String
-                'FIELD_LENGTH': 4,
-                'FIELD_PRECISION': 0,
-                'FORMULA': "CASE WHEN \"ZpusobyVyu\" is '6' or \"ZpusobyVyu\" is '7' or \"ZpusobyVyu\" is '8' or \"ZpusobyVyu\" is '9' or \"ZpusobyVyu\" is '10' or \"ZpusobyVyu\" is '28' THEN 'WATR' WHEN \"ZpusobyVyu\" is '12' or \"ZpusobyVyu\" is '13' or \"ZpusobyVyu\" is '23' or \"ZpusobyVyu\" is '26' THEN 'URML' WHEN \"ZpusobyVyu\" is '20' or \"ZpusobyVyu\" is '21' THEN 'UCOM' WHEN \"ZpusobyVyu\" is '25' THEN 'UIDU' WHEN \"ZpusobyVyu\" is '14' or \"ZpusobyVyu\" is '15' or \"ZpusobyVyu\" is '16' or \"ZpusobyVyu\" is '17' or \"ZpusobyVyu\" is '18' or \"ZpusobyVyu\" is '19' THEN 'UTRN' WHEN \"ZpusobyVyu\" is '24' THEN 'SWRN' WHEN \"ZpusobyVyu\" is '3' or \"ZpusobyVyu\" is '4' or \"ZpusobyVyu\" is '5' THEN 'FRST' WHEN \"ZpusobyVyu\" is '1' or \"ZpusobyVyu\" is '2' THEN 'ORCD' WHEN \"ZpusobyVyu\" is '27' THEN 'AGRL' WHEN \"ZpusobyVyu\" is '11' THEN 'WETN' WHEN \"DruhPozemk\" is '11' THEN 'WATR' WHEN \"DruhPozemk\" is '5' or \"DruhPozemk\" is '13' or \"DruhPozemk\" is '14' THEN 'URML' WHEN \"DruhPozemk\" is '10' THEN 'FRST' WHEN \"DruhPozemk\" is '3' or \"DruhPozemk\" is '4' or \"DruhPozemk\" is '6' THEN 'ORCD' WHEN \"DruhPozemk\" is '7' THEN 'RNGE' WHEN \"DruhPozemk\" is '2' THEN 'AGRL' END",
-                'OUTPUT': output_path
-            })
-            layer.updateFields()
+                    'INPUT': layer,
+                    'FIELD_NAME': 'SWAT_LU_CO',
+                    'FIELD_TYPE': 1,  # Set the data type to String
+                    'FIELD_LENGTH': 2,
+                    'FIELD_PRECISION': 0,
+                    'FORMULA': "CASE WHEN \"ZpusobyVyu\" is '6' or \"ZpusobyVyu\" is '7' or \"ZpusobyVyu\" is '8' or \"ZpusobyVyu\" is '9' or \"ZpusobyVyu\" is '10' or \"ZpusobyVyu\" is '28' THEN 11 WHEN \"ZpusobyVyu\" is '12' or \"ZpusobyVyu\" is '13' or \"ZpusobyVyu\" is '23' or \"ZpusobyVyu\" is '26' THEN 21 WHEN \"ZpusobyVyu\" is '20' or \"ZpusobyVyu\" is '21' THEN 23 WHEN \"ZpusobyVyu\" is '25' THEN 25 WHEN \"ZpusobyVyu\" is '14' or \"ZpusobyVyu\" is '15' or \"ZpusobyVyu\" is '16' or \"ZpusobyVyu\" is '17' or \"ZpusobyVyu\" is '18' or \"ZpusobyVyu\" is '19' THEN 26 WHEN \"ZpusobyVyu\" is '24' THEN 33 WHEN \"ZpusobyVyu\" is '3' or \"ZpusobyVyu\" is '4' or \"ZpusobyVyu\" is '5' THEN 43 WHEN \"ZpusobyVyu\" is '1' or \"ZpusobyVyu\" is '2' THEN 61 WHEN \"ZpusobyVyu\" is '27' THEN 85 WHEN \"ZpusobyVyu\" is '11' THEN 92 WHEN \"DruhPozemk\" is '11' THEN 11 WHEN \"DruhPozemk\" is '5' or \"DruhPozemk\" is '13' or \"DruhPozemk\" is '14' THEN 21 WHEN \"DruhPozemk\" is '10' THEN 43 WHEN \"DruhPozemk\" is '3' or \"DruhPozemk\" is '4' or \"DruhPozemk\" is '6' THEN 61 WHEN \"DruhPozemk\" is '7' THEN 71 WHEN \"DruhPozemk\" is '2' THEN 85 END",
+                    'OUTPUT': output_path
+                })
+                layer.updateFields()
+                layer.commitChanges()
 
-        result_layer = QgsVectorLayer(output_path, "result_layer", "ogr")
-        field_names_to_keep = ['SWAT_LU']
-        fields = result_layer.fields()
-        field_indices_to_remove = []
-        for i, field in enumerate(fields):
-            if field.name() not in field_names_to_keep:
-                field_indices_to_remove.append(i)
-
-        # remove the fields from the layer
-        result_layer.dataProvider().deleteAttributes(field_indices_to_remove, )
-        result_layer.updateFields()
-        result_layer.commitChanges()
         QMessageBox.information(None, "Gratulace", "Vrstva je připravena k dalšímu zpracování")
 
 
@@ -182,3 +212,6 @@ class BPEJRUIANSWATDialog(QtWidgets.QDialog, FORM_CLASS):
 
         else:
             QMessageBox.critical(None, "Error", "URL nenalezeno")
+    def html_chmu(self):
+        url = "https://www.chmi.cz/historicka-data/pocasi/denni-data/Denni-data-dle-z.-123-1998-Sb#"
+        webbrowser.open_new_tab(url)
